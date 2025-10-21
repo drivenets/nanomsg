@@ -815,9 +815,6 @@ static void nn_usock_handler (struct nn_fsm *self, int src, int type,
                 errnum_assert (rc == -ECONNRESET, -rc);
                 goto error;
             case NN_WORKER_FD_ERR:
-                /* we ignore the error as we want to read everything we have on the socket before */
-                /* socket will be closed and NN_POLLER_IN will be triggered anyway */
-                return;
 error:
                 nn_worker_rm_fd (usock->worker, &usock->wfd);
                 nn_closefd (usock->s);
