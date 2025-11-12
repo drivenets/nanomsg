@@ -86,9 +86,11 @@ struct nn_btcp {
 /*  nn_ep virtual interface implementation. */
 static void nn_btcp_stop (void *);
 static void nn_btcp_destroy (void *);
+static int nn_btcp_setopt (void *, int option, const void *optval, size_t optvallen);
 const struct nn_ep_ops nn_btcp_ep_ops = {
     nn_btcp_stop,
-    nn_btcp_destroy
+    nn_btcp_destroy,
+    nn_btcp_setopt
 };
 
 /*  Private functions. */
@@ -186,6 +188,34 @@ static void nn_btcp_destroy (void *self)
     nn_fsm_term (&btcp->fsm);
 
     nn_free (btcp);
+}
+
+static int nn_btcp_setopt (void *self, int option, const void *optval, 
+    size_t optvallen)
+{
+    struct nn_btcp *btcp = self;
+    struct nn_list_item *it;
+    struct nn_atcp *atcp;
+    int rc;
+    int applied = 0;
+
+    /*  btcp is a bind endpoint (listener) that can have multiple accepted
+        connections. Each accepted connection is an atcp instance.
+        
+        This is the second level of iteration:
+        - sock.c iterates through endpoints (including this btcp)
+        - This function iterates through all atcp connections within this btcp
+        - Each atcp applies the option to its underlying socket */
+    for (it = nn_list_begin (&btcp->atcps);
+          it != nn_list_end (&btcp->atcps);
+          it = nn_list_next (&btcp->atcps, it)) {
+        atcp = nn_cont (it, struct nn_atcp, item);
+        rc = nn_atcp_setopt (atcp, option, optval, optvallen);
+        if (rc == 0)
+            applied = 1;
+    }
+
+    return applied ? 0 : -ENOPROTOOPT;
 }
 
 static void nn_btcp_shutdown (struct nn_fsm *self, int src, int type,

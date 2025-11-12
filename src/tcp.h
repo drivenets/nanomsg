@@ -30,6 +30,7 @@ extern "C" {
 #define NN_TCP -3
 
 #define NN_TCP_NODELAY 1
+#define NN_TCP_QUICKACK 2
 
 #ifdef __cplusplus
 }

@@ -76,6 +76,9 @@ struct nn_ep_ops {
 
     /*  Deallocate the endpoint object. It will already have been stopped. */
     void (*destroy) (void *);
+
+    /*  Set a socket option on an active endpoint. Can be NULL if not supported. */
+    int (*setopt) (void *, int option, const void *optval, size_t optvallen);
 };
 
 /*  Set up an ep for use by a transport.  The final opaque argument is passed

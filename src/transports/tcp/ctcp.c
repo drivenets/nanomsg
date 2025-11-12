@@ -95,9 +95,11 @@ struct nn_ctcp {
 /*  nn_ep virtual interface implementation. */
 static void nn_ctcp_stop (void *);
 static void nn_ctcp_destroy (void *);
+static int nn_ctcp_setopt (void *, int option, const void *optval, size_t optvallen);
 const struct nn_ep_ops nn_ctcp_ep_ops = {
     nn_ctcp_stop,
-    nn_ctcp_destroy
+    nn_ctcp_destroy,
+    nn_ctcp_setopt
 };
 
 /*  Private functions. */
@@ -220,6 +222,44 @@ static void nn_ctcp_destroy (void *self)
     nn_fsm_term (&ctcp->fsm);
 
     nn_free (ctcp);
+}
+
+static int nn_ctcp_setopt (void *self, int option, const void *optval,
+    size_t optvallen)
+{
+    struct nn_ctcp *ctcp = self;
+    int val;
+    int rc;
+
+    /*  ctcp is a connect endpoint (outgoing connection).
+        Unlike btcp which can have multiple atcp connections, ctcp represents
+        a single outgoing connection, so we apply the option directly. */
+
+    /*  Only handle TCP_QUICKACK for now. */
+    if (option != NN_TCP_QUICKACK)
+        return -ENOPROTOOPT;
+
+    /*  Only apply if we're in ACTIVE state with a valid stcp connection. */
+    if (ctcp->state != NN_CTCP_STATE_ACTIVE)
+        return -ENOPROTOOPT;
+
+    /*  TCP_QUICKACK is always an int. */
+    if (optvallen != sizeof (int))
+        return -EINVAL;
+    val = *(const int*) optval;
+
+    /*  Apply TCP_QUICKACK directly to the underlying OS socket.
+        
+        We can't use nn_usock_setsockopt() because it has an assertion that
+        only allows setting options on sockets in STARTING or ACCEPTED state.
+        Since this connection is already ACTIVE (established and exchanging data),
+        we access ctcp->usock.s directly to call the OS setsockopt(). */
+    rc = setsockopt (ctcp->usock.s, IPPROTO_TCP, TCP_QUICKACK,
+        &val, sizeof (val));
+    if (rc != 0)
+        return -errno;
+
+    return 0;
 }
 
 static void nn_ctcp_shutdown (struct nn_fsm *self, int src, int type,
