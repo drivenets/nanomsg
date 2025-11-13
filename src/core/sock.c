@@ -25,6 +25,7 @@
 
 #include "../protocol.h"
 #include "../transport.h"
+#include "../tcp.h"
 
 #include "sock.h"
 #include "global.h"
@@ -296,6 +297,44 @@ static int nn_sock_setopt_inner (struct nn_sock *self, int level,
 
     /*  Transport-specific options. */
     if (level < NN_SOL_SOCKET) {
+        /*  Special handling for TCP_QUICKACK - apply to all active endpoints.
+            
+            TCP_QUICKACK must be set on active connections (after recv), so we
+            need to iterate through all endpoints and apply it to their active
+            connections.
+            
+            Architecture:
+            - Socket has multiple endpoints (one per nn_bind/nn_connect call)
+            - Each bind endpoint (btcp) can have multiple accepted connections (atcp)
+            - Each connect endpoint (ctcp) has one outgoing connection
+            
+            This iteration hits all endpoints, and each endpoint's setopt will
+            in turn apply the option to all its active connections. */
+        if (level == NN_TCP && option == NN_TCP_QUICKACK) {
+            struct nn_list_item *it;
+            struct nn_ep *ep;
+            int rc;
+            int applied = 0;
+            
+            /*  Iterate through all endpoints (btcp/ctcp instances) */
+            for (it = nn_list_begin (&self->eps);
+                  it != nn_list_end (&self->eps);
+                  it = nn_list_next (&self->eps, it)) {
+                ep = nn_cont (it, struct nn_ep, item);
+                
+                /*  Only apply to TCP endpoints that have a setopt operation.
+                    This will call nn_btcp_setopt or nn_ctcp_setopt. */
+                if (ep->ops.setopt != NULL) {
+                    rc = ep->ops.setopt (ep->tran, option, optval, optvallen);
+                    if (rc == 0)
+                        applied = 1;
+                }
+            }
+            
+            /*  Return success if at least one endpoint accepted it */
+            return applied ? 0 : -ENOPROTOOPT;
+        }
+        
         optset = nn_sock_optset (self, level);
         if (!optset)
             return -ENOPROTOOPT;

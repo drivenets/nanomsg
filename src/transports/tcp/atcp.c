@@ -108,6 +108,44 @@ void nn_atcp_stop (struct nn_atcp *self)
     nn_fsm_stop (&self->fsm);
 }
 
+int nn_atcp_setopt (struct nn_atcp *self, int option, const void *optval,
+    size_t optvallen)
+{
+    int val;
+    int rc;
+
+    /*  This is called for each accepted TCP connection (atcp) to apply
+        socket options on the active, established connection.
+        
+        atcp represents one accepted client connection within a btcp listener. */
+
+    /*  Only handle TCP_QUICKACK for now. */
+    if (option != NN_TCP_QUICKACK)
+        return -ENOPROTOOPT;
+
+    /*  Only apply if we're in ACTIVE state with a valid stcp connection. */
+    if (self->state != NN_ATCP_STATE_ACTIVE)
+        return -ENOPROTOOPT;
+
+    /*  TCP_QUICKACK is always an int. */
+    if (optvallen != sizeof (int))
+        return -EINVAL;
+    val = *(const int*) optval;
+
+    /*  Apply TCP_QUICKACK directly to the underlying OS socket.
+        
+        We can't use nn_usock_setsockopt() because it has an assertion that
+        only allows setting options on sockets in STARTING or ACCEPTED state.
+        Since this connection is already ACTIVE (established and exchanging data),
+        we access self->usock.s directly to call the OS setsockopt(). */
+    rc = setsockopt (self->usock.s, IPPROTO_TCP, TCP_QUICKACK,
+        &val, sizeof (val));
+    if (rc != 0)
+        return -errno;
+
+    return 0;
+}
+
 static void nn_atcp_shutdown (struct nn_fsm *self, int src, int type,
     NN_UNUSED void *srcptr)
 {

@@ -220,5 +220,28 @@ int main (int argc, const char *argv[])
     nn_sleep (100);
     test_close (sc);
 
+    /*  Test TCP_QUICKACK socket option. */
+    sb = test_socket (AF_SP, NN_PAIR);
+    test_bind (sb, socket_address);
+    sc = test_socket (AF_SP, NN_PAIR);
+    test_connect (sc, socket_address);
+    nn_sleep (100);
+    
+    /*  Send and receive a message. */
+    test_send (sc, "HELLO");
+    test_recv (sb, "HELLO");
+    
+    /*  Set TCP_QUICKACK after recv - should succeed on active connection. */
+    opt = 1;
+    rc = nn_setsockopt (sb, NN_TCP, NN_TCP_QUICKACK, &opt, sizeof (opt));
+    errno_assert (rc == 0);
+    
+    /*  Try setting it on the sender side too. */
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_QUICKACK, &opt, sizeof (opt));
+    errno_assert (rc == 0);
+    
+    test_close (sb);
+    test_close (sc);
+
     return 0;
 }

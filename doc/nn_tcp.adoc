@@ -53,6 +53,13 @@ NN_TCP_NODELAY::
     delaying of TCP acknowledgments. Using this option improves latency at
     the expense of throughput. Type of this option is int. Default value is 0.
 
+NN_TCP_QUICKACK::
+    This option, when set to 1, requests immediate sending of TCP acknowledgment.
+    Unlike NN_TCP_NODELAY, this is a one-shot option that is automatically
+    cleared by the kernel after each receive operation. This option should be
+    called after nn_recv() to force an immediate ACK for the received data.
+    This is a Linux-specific option. Type of this option is int.
+
 
 EXAMPLE
 -------
