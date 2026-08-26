@@ -206,6 +206,40 @@ static void nn_atcp_handler (struct nn_fsm *self, int src, int type,
                 nn_assert (sz == sizeof (val));
                 nn_usock_setsockopt (&atcp->usock, IPPROTO_TCP, TCP_NODELAY,
                     &val, sizeof (val));
+                sz = sizeof (val);
+                nn_ep_getopt (atcp->ep, NN_TCP, NN_TCP_KEEPALIVE, &val, &sz);
+                nn_assert (sz == sizeof (val));
+                nn_usock_setsockopt (&atcp->usock, SOL_SOCKET, SO_KEEPALIVE,
+                    &val, sizeof (val));
+                if (val) {
+#if defined TCP_KEEPIDLE
+                    sz = sizeof (val);
+                    nn_ep_getopt (atcp->ep, NN_TCP, NN_TCP_KEEPIDLE,
+                        &val, &sz);
+                    nn_assert (sz == sizeof (val));
+                    if (val > 0)
+                        nn_usock_setsockopt (&atcp->usock, IPPROTO_TCP,
+                            TCP_KEEPIDLE, &val, sizeof (val));
+#endif
+#if defined TCP_KEEPINTVL
+                    sz = sizeof (val);
+                    nn_ep_getopt (atcp->ep, NN_TCP, NN_TCP_KEEPINTVL,
+                        &val, &sz);
+                    nn_assert (sz == sizeof (val));
+                    if (val > 0)
+                        nn_usock_setsockopt (&atcp->usock, IPPROTO_TCP,
+                            TCP_KEEPINTVL, &val, sizeof (val));
+#endif
+#if defined TCP_KEEPCNT
+                    sz = sizeof (val);
+                    nn_ep_getopt (atcp->ep, NN_TCP, NN_TCP_KEEPCNT,
+                        &val, &sz);
+                    nn_assert (sz == sizeof (val));
+                    if (val > 0)
+                        nn_usock_setsockopt (&atcp->usock, IPPROTO_TCP,
+                            TCP_KEEPCNT, &val, sizeof (val));
+#endif
+                }
 
                 /*  Return ownership of the listening socket to the parent. */
                 nn_usock_swap_owner (atcp->listener, &atcp->listener_owner);

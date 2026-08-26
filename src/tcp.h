@@ -29,7 +29,11 @@ extern "C" {
 
 #define NN_TCP -3
 
-#define NN_TCP_NODELAY 1
+#define NN_TCP_NODELAY 1   /* maps to TCP_NODELAY */
+#define NN_TCP_KEEPALIVE 2 /* maps to SO_KEEPALIVE */
+#define NN_TCP_KEEPIDLE 3  /* maps to TCP_KEEPIDLE */
+#define NN_TCP_KEEPINTVL 4 /* maps to TCP_KEEPINTVL */
+#define NN_TCP_KEEPCNT 5   /* maps to TCP_KEEPCNT */
 
 #ifdef __cplusplus
 }

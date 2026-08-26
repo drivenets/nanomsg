@@ -53,6 +53,25 @@ NN_TCP_NODELAY::
     delaying of TCP acknowledgments. Using this option improves latency at
     the expense of throughput. Type of this option is int. Default value is 0.
 
+NN_TCP_KEEPALIVE::
+    This option, when set to 1, enables TCP keepalive probes on the underlying
+    TCP socket. Type of this option is int. Default value is 0.
+
+NN_TCP_KEEPIDLE::
+    This option sets the number of seconds a TCP connection must remain idle
+    before TCP starts sending keepalive probes. A value of 0 leaves the system
+    default unchanged. Type of this option is int. Default value is 0.
+
+NN_TCP_KEEPINTVL::
+    This option sets the number of seconds between TCP keepalive probes. A
+    value of 0 leaves the system default unchanged. Type of this option is int.
+    Default value is 0.
+
+NN_TCP_KEEPCNT::
+    This option sets the number of failed TCP keepalive probes before the
+    connection is dropped. A value of 0 leaves the system default unchanged.
+    Type of this option is int. Default value is 0.
+
 
 EXAMPLE
 -------

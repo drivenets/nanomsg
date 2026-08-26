@@ -48,6 +48,10 @@
 struct nn_tcp_optset {
     struct nn_optset base;
     int nodelay;
+    int keepalive;
+    int keepidle;
+    int keepintvl;
+    int keepcnt;
 };
 
 static void nn_tcp_optset_destroy (struct nn_optset *self);
@@ -96,6 +100,10 @@ static struct nn_optset *nn_tcp_optset ()
 
     /*  Default values for TCP socket options. */
     optset->nodelay = 0;
+    optset->keepalive = 0;
+    optset->keepidle = 0;
+    optset->keepintvl = 0;
+    optset->keepcnt = 0;
 
     return &optset->base;   
 }
@@ -127,6 +135,26 @@ static int nn_tcp_optset_setopt (struct nn_optset *self, int option,
             return -EINVAL;
         optset->nodelay = val;
         return 0;
+    case NN_TCP_KEEPALIVE:
+        if (nn_slow (val != 0 && val != 1))
+            return -EINVAL;
+        optset->keepalive = val;
+        return 0;
+    case NN_TCP_KEEPIDLE:
+        if (nn_slow (val < 0))
+            return -EINVAL;
+        optset->keepidle = val;
+        return 0;
+    case NN_TCP_KEEPINTVL:
+        if (nn_slow (val < 0))
+            return -EINVAL;
+        optset->keepintvl = val;
+        return 0;
+    case NN_TCP_KEEPCNT:
+        if (nn_slow (val < 0))
+            return -EINVAL;
+        optset->keepcnt = val;
+        return 0;
     default:
         return -ENOPROTOOPT;
     }
@@ -143,6 +171,18 @@ static int nn_tcp_optset_getopt (struct nn_optset *self, int option,
     switch (option) {
     case NN_TCP_NODELAY:
         intval = optset->nodelay;
+        break;
+    case NN_TCP_KEEPALIVE:
+        intval = optset->keepalive;
+        break;
+    case NN_TCP_KEEPIDLE:
+        intval = optset->keepidle;
+        break;
+    case NN_TCP_KEEPINTVL:
+        intval = optset->keepintvl;
+        break;
+    case NN_TCP_KEEPCNT:
+        intval = optset->keepcnt;
         break;
     default:
         return -ENOPROTOOPT;

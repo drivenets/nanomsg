@@ -611,6 +611,37 @@ static void nn_ctcp_start_connecting (struct nn_ctcp *self,
     nn_assert (sz == sizeof (val));
     nn_usock_setsockopt (&self->usock, IPPROTO_TCP, TCP_NODELAY,
         &val, sizeof (val));
+    sz = sizeof (val);
+    nn_ep_getopt (self->ep, NN_TCP, NN_TCP_KEEPALIVE, &val, &sz);
+    nn_assert (sz == sizeof (val));
+    nn_usock_setsockopt (&self->usock, SOL_SOCKET, SO_KEEPALIVE,
+        &val, sizeof (val));
+    if (val) {
+#if defined TCP_KEEPIDLE
+        sz = sizeof (val);
+        nn_ep_getopt (self->ep, NN_TCP, NN_TCP_KEEPIDLE, &val, &sz);
+        nn_assert (sz == sizeof (val));
+        if (val > 0)
+            nn_usock_setsockopt (&self->usock, IPPROTO_TCP, TCP_KEEPIDLE,
+                &val, sizeof (val));
+#endif
+#if defined TCP_KEEPINTVL
+        sz = sizeof (val);
+        nn_ep_getopt (self->ep, NN_TCP, NN_TCP_KEEPINTVL, &val, &sz);
+        nn_assert (sz == sizeof (val));
+        if (val > 0)
+            nn_usock_setsockopt (&self->usock, IPPROTO_TCP, TCP_KEEPINTVL,
+                &val, sizeof (val));
+#endif
+#if defined TCP_KEEPCNT
+        sz = sizeof (val);
+        nn_ep_getopt (self->ep, NN_TCP, NN_TCP_KEEPCNT, &val, &sz);
+        nn_assert (sz == sizeof (val));
+        if (val > 0)
+            nn_usock_setsockopt (&self->usock, IPPROTO_TCP, TCP_KEEPCNT,
+                &val, sizeof (val));
+#endif
+    }
 
     /*  Bind the socket to the local network interface. */
     rc = nn_usock_bind (&self->usock, (struct sockaddr*) &local, locallen);
