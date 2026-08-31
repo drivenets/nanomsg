@@ -82,6 +82,60 @@ int main (int argc, const char *argv[])
     nn_assert (sz == sizeof (opt));
     nn_assert (opt == 1);
 
+    /*  Check TCP keepalive socket options. */
+    sz = sizeof (opt);
+    rc = nn_getsockopt (sc, NN_TCP, NN_TCP_KEEPALIVE, &opt, &sz);
+    errno_assert (rc == 0);
+    nn_assert (sz == sizeof (opt));
+    nn_assert (opt == 0);
+    opt = 2;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPALIVE, &opt, sizeof (opt));
+    nn_assert (rc < 0 && nn_errno () == EINVAL);
+    opt = 1;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPALIVE, &opt, sizeof (opt));
+    errno_assert (rc == 0);
+    sz = sizeof (opt);
+    rc = nn_getsockopt (sc, NN_TCP, NN_TCP_KEEPALIVE, &opt, &sz);
+    errno_assert (rc == 0);
+    nn_assert (sz == sizeof (opt));
+    nn_assert (opt == 1);
+
+    opt = -1;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPIDLE, &opt, sizeof (opt));
+    nn_assert (rc < 0 && nn_errno () == EINVAL);
+    opt = 10;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPIDLE, &opt, sizeof (opt));
+    errno_assert (rc == 0);
+    sz = sizeof (opt);
+    rc = nn_getsockopt (sc, NN_TCP, NN_TCP_KEEPIDLE, &opt, &sz);
+    errno_assert (rc == 0);
+    nn_assert (sz == sizeof (opt));
+    nn_assert (opt == 10);
+
+    opt = -1;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPINTVL, &opt, sizeof (opt));
+    nn_assert (rc < 0 && nn_errno () == EINVAL);
+    opt = 2;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPINTVL, &opt, sizeof (opt));
+    errno_assert (rc == 0);
+    sz = sizeof (opt);
+    rc = nn_getsockopt (sc, NN_TCP, NN_TCP_KEEPINTVL, &opt, &sz);
+    errno_assert (rc == 0);
+    nn_assert (sz == sizeof (opt));
+    nn_assert (opt == 2);
+
+    opt = -1;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPCNT, &opt, sizeof (opt));
+    nn_assert (rc < 0 && nn_errno () == EINVAL);
+    opt = 3;
+    rc = nn_setsockopt (sc, NN_TCP, NN_TCP_KEEPCNT, &opt, sizeof (opt));
+    errno_assert (rc == 0);
+    sz = sizeof (opt);
+    rc = nn_getsockopt (sc, NN_TCP, NN_TCP_KEEPCNT, &opt, &sz);
+    errno_assert (rc == 0);
+    nn_assert (sz == sizeof (opt));
+    nn_assert (opt == 3);
+
     /*  Try using invalid address strings. */
     rc = nn_connect (sc, "tcp://*:");
     nn_assert (rc < 0);
